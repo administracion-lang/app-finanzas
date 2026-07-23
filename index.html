@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FINANZAS V20.0</title>.
+    <title>FINANZAS V20.1</title>.
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e293b">
@@ -50,7 +50,7 @@
         <div class="flex items-center gap-3">
             <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-yellow-400"><i id="theme-icon" class="fas fa-moon"></i></button>
             <div>
-                <h1 class="font-black italic text-xl uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 leading-none">V20.0</h1>
+                <h1 class="font-black italic text-xl uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 leading-none">V20.1</h1>
                 <p id="mes-header" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
             </div>
         </div>
@@ -553,20 +553,30 @@
             const historial = db.movs.filter(m => m.fecha <= fechaLimite);
             
             let patrimonioCalc = 0;
-            historial.forEach(m => {
-                if (m.tipo === 'Ingreso') {
-                    patrimonioCalc += m.valor;
-                } else if (m.tipo === 'Gasto') {
-                    let isConsumption = true;
-                    if (m.huchaId && m.huchaAccion !== 'resta') {
-                        isConsumption = false; 
-                    }
-                    if (isConsumption) {
-                        patrimonioCalc -= m.valor;
-                    }
-                }
-            });
-            document.getElementById('patrimonio-total').innerText = patrimonioCalc.toFixed(2) + "€";
+historial.forEach(m => {
+    if (m.tipo === 'Ingreso') {
+        patrimonioCalc += m.valor;
+    } else if (m.tipo === 'Gasto') {
+        let isConsumption = true;
+        
+        // 1. Excepción de Huchas (tu lógica original)
+        if (m.huchaId && m.huchaAccion !== 'resta') {
+            isConsumption = false;
+        }
+        
+        // 2. NUEVA EXCEPCIÓN: INVERSIONES (V20.2)
+        let claseMov = m.clase ? m.clase.toUpperCase() : '';
+        if (claseMov === 'INVERSIÓN' || claseMov === 'INVERSION') {
+            isConsumption = false; // El dinero sale del banco, pero no baja tu patrimonio
+        }
+
+        // Si realmente es un gasto de consumo, entonces sí baja el patrimonio
+        if (isConsumption) {
+            patrimonioCalc -= m.valor;
+        }
+    }
+});
+document.getElementById('patrimonio-total').innerText = patrimonioCalc.toFixed(2) + "€";
 
             let kpiHtml = '';
             if(totalIngresos > 0) { 
